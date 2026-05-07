@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apriori Platform</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Background Animation Elements -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <div class="container">
+        <!-- Navbar -->
+        <nav class="navbar glass-panel">
+            <div class="logo">
+                <i class="fa-solid fa-network-wired"></i>
+                <span id="app_title">Apriori Platform</span>
+            </div>
+            <div class="lang-switcher">
+                <select id="langSelect" onchange="changeLanguage()">
+                    <option value="uz">O'zbek</option>
+                    <option value="en">English</option>
+                    <option value="ru">Русский</option>
+                </select>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <header class="hero">
+            <h1 id="hero_title" class="gradient-text">AI-Powered Association Rule Mining</h1>
+            <p id="hero_subtitle">Upload your dataset and discover hidden patterns using the Apriori algorithm.</p>
+        </header>
+
+        <!-- Main Content Grid -->
+        <main class="main-grid">
+            <!-- Left Column: Upload & Params -->
+            <div class="left-col">
+                <section class="card glass-panel upload-section">
+                    <h2 id="upload_title"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Dataset</h2>
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fa-solid fa-file-csv fa-3x"></i>
+                        <p id="upload_desc">Drag & drop your CSV file here or click to browse</p>
+                        <input type="file" id="fileInput" accept=".csv" hidden>
+                    </div>
+                    <div id="fileInfo" class="hidden">
+                        <span id="fileName"></span>
+                        <i class="fa-solid fa-times text-danger" id="removeFile" style="cursor:pointer;"></i>
+                    </div>
+                </section>
+
+                <section class="card glass-panel params-section">
+                    <h2 id="params_title"><i class="fa-solid fa-sliders"></i> Apriori Parameters</h2>
+                    <form id="aprioriForm">
+                        <div class="form-group">
+                            <label id="lbl_min_support" for="minSupport">Minimum Support:</label>
+                            <div class="range-wrap">
+                                <input type="range" id="minSupport" name="min_support" min="0.01" max="1" step="0.01" value="0.05" oninput="valSupport.value = this.value">
+                                <output id="valSupport">0.05</output>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label id="lbl_min_confidence" for="minConfidence">Minimum Confidence:</label>
+                            <div class="range-wrap">
+                                <input type="range" id="minConfidence" name="min_confidence" min="0.01" max="1" step="0.01" value="0.2" oninput="valConfidence.value = this.value">
+                                <output id="valConfidence">0.2</output>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label id="lbl_max_rules" for="maxRules">Maximum Rules:</label>
+                            <input type="number" id="maxRules" name="max_rules" value="100" min="1" max="1000">
+                        </div>
+                        <button type="submit" class="btn-primary" id="btn_analyze">
+                            <span>Analyze Data</span>
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </button>
+                    </form>
+                </section>
+            </div>
+
+            <!-- Right Column: Results & Visuals -->
+            <div class="right-col">
+                <!-- Loader -->
+                <div id="loader" class="glass-panel hidden">
+                    <div class="spinner"></div>
+                    <p>Processing data...</p>
+                </div>
+
+                <!-- Dashboard Content (hidden initially) -->
+                <div id="dashboardContent" class="hidden">
+                    <!-- Stats Row -->
+                    <div class="stats-row">
+                        <div class="stat-card glass-panel">
+                            <i class="fa-solid fa-list-ol"></i>
+                            <div class="stat-info">
+                                <h3 id="stats_rules">Rules Found:</h3>
+                                <p id="totalRulesVal" class="gradient-text">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <i class="fa-solid fa-cubes"></i>
+                            <div class="stat-info">
+                                <h3 id="stats_itemsets">Frequent Itemsets:</h3>
+                                <p id="totalItemsetsVal" class="gradient-text">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="charts-grid">
+                        <div class="chart-card glass-panel">
+                            <h3 id="chart_title_scatter">Confidence vs Support Scatter</h3>
+                            <canvas id="scatterChart"></canvas>
+                        </div>
+                        <div class="chart-card glass-panel">
+                            <h3 id="chart_title_bar">Top 10 Rules by Lift</h3>
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Table Section -->
+                    <section class="card glass-panel table-section">
+                        <div class="table-header">
+                            <h2 id="results_title">Results</h2>
+                            <div class="table-actions">
+                                <input type="text" id="searchInput" placeholder="Search rules..." class="search-input">
+                                <button class="btn-secondary" id="btn_export_csv" onclick="exportToCSV()"><i class="fa-solid fa-download"></i> CSV</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="rulesTable">
+                                <thead>
+                                    <tr>
+                                        <th id="th_rule">Rule</th>
+                                        <th id="th_support">Support</th>
+                                        <th id="th_confidence">Confidence</th>
+                                        <th id="th_lift">Lift</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rulesTableBody">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="paginationControls">
+                            <!-- Pagination buttons -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <footer class="glass-panel">
+            <p id="footer_text">&copy; 2026 Apriori Platform. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Main JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

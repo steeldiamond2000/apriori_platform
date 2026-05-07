@@ -3,7 +3,6 @@ import json
 from flask import Flask, render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 from utils.apriori_engine import run_apriori
-import pandas as pd
 import traceback
 
 app = Flask(__name__)
